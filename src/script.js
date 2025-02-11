@@ -1,6 +1,6 @@
 import GUI from 'lil-gui'
 import * as THREE from 'three'
-import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg'
+import { ADDITION, Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 // Debug
@@ -22,9 +22,11 @@ let device = null
 
 let egg = null
 let inset = null
+let inset2 = null
 
 let eggGeometry = null
 let insetGeometry = null
+let inset2Geometry = null
 
 const eggMaterial = new THREE.MeshMatcapMaterial({
   matcap: eggTexture,
@@ -36,14 +38,24 @@ const insetMaterial = new THREE.MeshMatcapMaterial({
 
 const params = {
   helpers: true,
+
   eggGirth: 0.8,
   eggApex: 0.15,
+
   insetRadiusTop: 1,
   insetRadiusBottom: 0.5,
   insetHeight: 0.5,
   insetPositionX: 0,
   insetPositionY: 0,
   insetPositionZ: -0.5,
+
+  inset2RadiusTop: 1,
+  inset2RadiusBottom: 0.4,
+  inset2Height: 0.3,
+  inset2PositionX: 0.02,
+  inset2PositionY: 0.04,
+  inset2PositionZ: -0.37,
+
   deviceScaleX: 1,
   deviceScaleZ: 0.5,
 }
@@ -53,7 +65,7 @@ function generateDevice() {
     eggGeometry.dispose()
     insetGeometry.dispose()
 
-    scene.remove(egg, inset, device)
+    scene.remove(egg, inset, inset2, device)
   }
 
   const points = []
@@ -83,18 +95,69 @@ function generateDevice() {
   inset.position.set(params.insetPositionX, params.insetPositionY, params.insetPositionZ)
   inset.updateMatrixWorld()
 
+  inset2Geometry = new THREE.CylinderGeometry(
+    params.inset2RadiusTop,
+    params.inset2RadiusBottom,
+    params.inset2Height,
+    4,
+  )
+  inset2 = new Brush(inset2Geometry, insetMaterial)
+  inset2.rotation.y = Math.PI * 0.05
+  inset2.scale.setScalar(0.8, 2, 0.5)
+  inset2.rotation.x = -Math.PI * 0.5
+  inset2.position.set(params.inset2PositionX, params.inset2PositionY, params.inset2PositionZ)
+  inset2.updateMatrixWorld()
+
+  const buttonInsetMaterial = new THREE.MeshBasicMaterial({ color: 'black' })
+
+  //   Button A
+  const buttonAInset = new Brush(new THREE.SphereGeometry(0.1), buttonInsetMaterial)
+  buttonAInset.position.set(0, -0.7, -0.3)
+  buttonAInset.updateMatrixWorld()
+
+  const buttonA = new Brush(new THREE.SphereGeometry(0.09), insetMaterial)
+  buttonA.scale.z = 0.5
+  buttonA.rotation.x = -Math.PI * 0.15
+  buttonA.position.set(0, -0.71, -0.31)
+  buttonA.updateMatrixWorld()
+
+  //   Button B
+  const buttonBInset = new Brush(new THREE.SphereGeometry(0.1), buttonInsetMaterial)
+  buttonBInset.position.set(-0.3, -0.6, -0.3)
+  buttonBInset.updateMatrixWorld()
+
+  const buttonB = new Brush(new THREE.SphereGeometry(0.09), insetMaterial)
+  buttonB.scale.z = 0.5
+  buttonB.rotation.y = Math.PI * 0.1
+  buttonB.rotation.x = -Math.PI * 0.1
+  buttonB.position.set(-0.3, -0.61, -0.31)
+  buttonB.updateMatrixWorld()
+
+  //   Button C
+  const buttonCInset = new Brush(new THREE.SphereGeometry(0.1), buttonInsetMaterial)
+  buttonCInset.position.set(0.3, -0.6, -0.3)
+  buttonCInset.updateMatrixWorld()
+
+  const buttonC = new Brush(new THREE.SphereGeometry(0.09), insetMaterial)
+  buttonC.scale.z = 0.5
+  buttonC.rotation.y = -Math.PI * 0.1
+  buttonC.rotation.x = -Math.PI * 0.1
+  buttonC.position.set(0.3, -0.61, -0.31)
+  buttonC.updateMatrixWorld()
+
   const evaluator = new Evaluator()
   device = evaluator.evaluate(egg, inset, SUBTRACTION)
+  device = evaluator.evaluate(device, inset2, SUBTRACTION)
 
-  const screen = new THREE.Mesh(
-    new THREE.PlaneGeometry(),
-    new THREE.MeshBasicMaterial({ color: 'black' }),
-  )
-  screen.scale.setScalar(0.7)
-  screen.position.z = -0.3
-  screen.rotation.x = Math.PI
+  device = evaluator.evaluate(device, buttonAInset, SUBTRACTION)
+  device = evaluator.evaluate(device, buttonBInset, SUBTRACTION)
+  device = evaluator.evaluate(device, buttonCInset, SUBTRACTION)
 
-  scene.add(device, screen)
+  device = evaluator.evaluate(device, buttonA, ADDITION)
+  device = evaluator.evaluate(device, buttonB, ADDITION)
+  device = evaluator.evaluate(device, buttonC, ADDITION)
+
+  scene.add(device)
 }
 
 generateDevice()
@@ -109,8 +172,26 @@ gui.add(params, 'insetPositionX').min(-5).max(5).step(0.01).onChange(generateDev
 gui.add(params, 'insetPositionY').min(-5).max(5).step(0.01).onChange(generateDevice)
 gui.add(params, 'insetPositionZ').min(-5).max(5).step(0.01).onChange(generateDevice)
 
+gui.add(params, 'inset2RadiusTop').min(0).max(10).step(0.01).onChange(generateDevice)
+gui.add(params, 'inset2RadiusBottom').min(0).max(10).step(0.01).onChange(generateDevice)
+gui.add(params, 'inset2Height').min(0).max(10).step(0.01).onChange(generateDevice)
+gui.add(params, 'inset2PositionX').min(-5).max(5).step(0.01).onChange(generateDevice)
+gui.add(params, 'inset2PositionY').min(-5).max(5).step(0.01).onChange(generateDevice)
+gui.add(params, 'inset2PositionZ').min(-5).max(5).step(0.01).onChange(generateDevice)
+
 gui.add(params, 'deviceScaleX').min(0).max(2).step(0.001).onChange(generateDevice)
 gui.add(params, 'deviceScaleZ').min(0).max(2).step(0.001).onChange(generateDevice)
+
+const screen = new THREE.Mesh(
+  new THREE.PlaneGeometry(),
+  new THREE.MeshBasicMaterial({ color: 'black' }),
+)
+screen.scale.setScalar(0.7)
+screen.position.z = -0.251
+screen.rotation.x = Math.PI
+scene.add(screen)
+
+gui.add(screen.position, 'z').min(-1).max(1).step(0.001).name('screenPositionZ') //prettier-ignore
 
 // Lights
 // const ambientLight = new THREE.AmbientLight('#ffffff', 0.5)
@@ -168,7 +249,7 @@ window.addEventListener('resize', () => {
 
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.set(2, 1, -4)
+camera.position.set(0.5, 0, -2)
 scene.add(camera)
 
 // Controls
