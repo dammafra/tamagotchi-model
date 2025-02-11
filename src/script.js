@@ -1,5 +1,6 @@
 import GUI from 'lil-gui'
 import * as THREE from 'three'
+import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 // Debug
@@ -11,58 +12,96 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
-const axesHelper = new THREE.AxesHelper(10)
-axesHelper.position.y = 0.0001
-
-const gridHelper = new THREE.GridHelper()
-
-scene.add(axesHelper, gridHelper)
-
 // Egg
+let device = null
+
 let egg = null
-let geometry = null
-const material = new THREE.MeshStandardMaterial()
+let screen = null
+
+let eggGeometry = null
+let screenGeometry = null
+
+const eggMaterial = new THREE.MeshStandardMaterial({
+  color: 0x118888,
+  roughness: 0.5,
+  metalness: 0.1,
+})
+
+const screenMaterial = new THREE.MeshStandardMaterial({
+  color: 0xffff66,
+  roughness: 0.5,
+  metalness: 0.1,
+})
 
 const params = {
-  girth: 0.8,
-  apex: 0.15,
-  scaleX: 0.5,
-  scaleZ: 1,
+  helpers: true,
+  eggGirth: 0.8,
+  eggApex: 0.15,
+  screenRadiusTop: 1,
+  screenRadiusBottom: 0.5,
+  screenHeight: 0.5,
+  screenPositionX: 0,
+  screenPositionY: 0,
+  screenPositionZ: -0.5,
+  deviceScaleX: 1,
+  deviceScaleZ: 0.5,
 }
 
-function generateEgg() {
-  if (egg) {
-    geometry.dispose()
-    scene.remove(egg)
+function generateDevice() {
+  if (device) {
+    eggGeometry.dispose()
+    screenGeometry.dispose()
+
+    scene.remove(egg, screen, device)
   }
 
   const points = []
   for (let deg = 0; deg <= 180; deg += 6) {
     const rad = (Math.PI * deg) / 180
     var v = new THREE.Vector2(
-      (params.apex * Math.cos(rad) + params.girth) * Math.sin(rad),
+      (params.eggApex * Math.cos(rad) + params.eggGirth) * Math.sin(rad),
       -Math.cos(rad),
     )
     points.push(v)
   }
 
-  // Creazione della geometria con rivoluzione
-  geometry = new THREE.LatheGeometry(points, 32)
-  egg = new THREE.Mesh(geometry, material)
+  eggGeometry = new THREE.LatheGeometry(points, 32)
+  egg = new Brush(eggGeometry, eggMaterial)
+  egg.scale.set(params.deviceScaleX, 1, params.deviceScaleZ)
+  egg.updateMatrixWorld()
 
-  egg.position.y = 1
+  screenGeometry = new THREE.CylinderGeometry(
+    params.screenRadiusTop,
+    params.screenRadiusBottom,
+    params.screenHeight,
+    4,
+  )
+  screen = new Brush(screenGeometry, screenMaterial)
+  screen.rotation.y = Math.PI * 0.25
+  screen.rotation.x = -Math.PI * 0.5
+  screen.position.set(params.screenPositionX, params.screenPositionY, params.screenPositionZ)
+  screen.updateMatrixWorld()
 
-  egg.scale.set(params.scaleX, 1, params.scaleZ)
+  const evaluator = new Evaluator()
+  device = evaluator.evaluate(egg, screen, SUBTRACTION)
 
-  scene.add(egg)
+  scene.add(device)
 }
 
-generateEgg()
+generateDevice()
 
-gui.add(params, 'girth').min(0).max(2).step(0.001).onChange(generateEgg)
-gui.add(params, 'apex').min(0).max(2).step(0.001).onChange(generateEgg)
-gui.add(params, 'scaleX').min(0).max(2).step(0.001).onChange(generateEgg)
-gui.add(params, 'scaleZ').min(0).max(2).step(0.001).onChange(generateEgg)
+gui.add(params, 'eggGirth').min(0).max(2).step(0.001).onChange(generateDevice)
+gui.add(params, 'eggApex').min(0).max(2).step(0.001).onChange(generateDevice)
+
+gui.add(params, 'screenRadiusTop').min(0).max(10).step(0.01).onChange(generateDevice)
+gui.add(params, 'screenRadiusBottom').min(0).max(10).step(0.01).onChange(generateDevice)
+gui.add(params, 'screenHeight').min(0).max(10).step(0.01).onChange(generateDevice)
+gui.add(params, 'screenPositionX').min(-5).max(5).step(0.01).onChange(generateDevice)
+gui.add(params, 'screenPositionY').min(-5).max(5).step(0.01).onChange(generateDevice)
+gui.add(params, 'screenPositionZ').min(-5).max(5).step(0.01).onChange(generateDevice)
+
+gui.add(params, 'deviceScaleX').min(0).max(2).step(0.001).onChange(generateDevice)
+gui.add(params, 'deviceScaleZ').min(0).max(2).step(0.001).onChange(generateDevice)
 
 // Lights
 const ambientLight = new THREE.AmbientLight('#ffffff', 0.5)
@@ -71,7 +110,32 @@ scene.add(ambientLight)
 const directionalLight = new THREE.DirectionalLight('#ffffff', 3)
 directionalLight.castShadow = true
 directionalLight.position.set(0.25, 2, -2.25)
+directionalLight.shadow.mapSize.width = 512
+directionalLight.shadow.mapSize.height = 512
+directionalLight.shadow.camera.near = 0.1
+directionalLight.shadow.camera.far = 20
 scene.add(directionalLight)
+
+// Helpers
+const axesHelper = new THREE.AxesHelper(10)
+axesHelper.visible = params.helpers
+axesHelper.position.y = -0.999
+
+const gridHelper = new THREE.GridHelper(10, 10, 'white', 'white')
+gridHelper.position.y = -1
+gridHelper.visible = params.helpers
+
+scene.add(axesHelper, gridHelper)
+
+const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight)
+directionalLightHelper.visible = params.helpers
+
+scene.add(axesHelper, gridHelper, directionalLightHelper)
+gui.add(params, 'helpers').onChange(value => {
+  axesHelper.visible = value
+  gridHelper.visible = value
+  directionalLightHelper.visible = value
+})
 
 // Sizes
 const sizes = {
@@ -95,7 +159,7 @@ window.addEventListener('resize', () => {
 
 // Camera
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.set(4, 1, -4)
+camera.position.set(2, 1, -4)
 scene.add(camera)
 
 // Controls
@@ -109,8 +173,7 @@ const renderer = new THREE.WebGLRenderer({
 })
 renderer.shadowMap.enabled = true
 renderer.shadowMap.type = THREE.PCFShadowMap
-renderer.toneMapping = THREE.ACESFilmicToneMapping
-renderer.toneMappingExposure = 1
+renderer.setClearColor(0x888888)
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
