@@ -12,6 +12,11 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
+// Textures
+const textureLoader = new THREE.TextureLoader()
+const eggTexture = textureLoader.load('./matcaps/matcap1.png')
+const screenTexture = textureLoader.load('./matcaps/matcap2.png')
+
 // Egg
 let device = null
 
@@ -21,16 +26,12 @@ let screen = null
 let eggGeometry = null
 let screenGeometry = null
 
-const eggMaterial = new THREE.MeshStandardMaterial({
-  color: 0x118888,
-  roughness: 0.5,
-  metalness: 0.1,
+const eggMaterial = new THREE.MeshMatcapMaterial({
+  matcap: eggTexture,
 })
 
-const screenMaterial = new THREE.MeshStandardMaterial({
-  color: 0xffff66,
-  roughness: 0.5,
-  metalness: 0.1,
+const screenMaterial = new THREE.MeshMatcapMaterial({
+  matcap: screenTexture,
 })
 
 const params = {
@@ -104,17 +105,17 @@ gui.add(params, 'deviceScaleX').min(0).max(2).step(0.001).onChange(generateDevic
 gui.add(params, 'deviceScaleZ').min(0).max(2).step(0.001).onChange(generateDevice)
 
 // Lights
-const ambientLight = new THREE.AmbientLight('#ffffff', 0.5)
-scene.add(ambientLight)
+// const ambientLight = new THREE.AmbientLight('#ffffff', 0.5)
+// scene.add(ambientLight)
 
-const directionalLight = new THREE.DirectionalLight('#ffffff', 3)
-directionalLight.castShadow = true
-directionalLight.position.set(0.25, 2, -2.25)
-directionalLight.shadow.mapSize.width = 512
-directionalLight.shadow.mapSize.height = 512
-directionalLight.shadow.camera.near = 0.1
-directionalLight.shadow.camera.far = 20
-scene.add(directionalLight)
+// const directionalLight = new THREE.DirectionalLight('#ffffff', 3)
+// directionalLight.castShadow = true
+// directionalLight.position.set(0.25, 2, -2.25)
+// directionalLight.shadow.mapSize.width = 512
+// directionalLight.shadow.mapSize.height = 512
+// directionalLight.shadow.camera.near = 0.1
+// directionalLight.shadow.camera.far = 20
+// scene.add(directionalLight)
 
 // Helpers
 const axesHelper = new THREE.AxesHelper(10)
@@ -127,14 +128,14 @@ gridHelper.visible = params.helpers
 
 scene.add(axesHelper, gridHelper)
 
-const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight)
-directionalLightHelper.visible = params.helpers
+// const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight)
+// directionalLightHelper.visible = params.helpers
 
-scene.add(axesHelper, gridHelper, directionalLightHelper)
+scene.add(axesHelper, gridHelper)
 gui.add(params, 'helpers').onChange(value => {
   axesHelper.visible = value
   gridHelper.visible = value
-  directionalLightHelper.visible = value
+  //   directionalLightHelper.visible = value
 })
 
 // Sizes
