@@ -15,35 +15,35 @@ const scene = new THREE.Scene()
 // Textures
 const textureLoader = new THREE.TextureLoader()
 const eggTexture = textureLoader.load('./matcaps/matcap1.png')
-const screenTexture = textureLoader.load('./matcaps/matcap2.png')
+const insetTexture = textureLoader.load('./matcaps/matcap2.png')
 
 // Egg
 let device = null
 
 let egg = null
-let screen = null
+let inset = null
 
 let eggGeometry = null
-let screenGeometry = null
+let insetGeometry = null
 
 const eggMaterial = new THREE.MeshMatcapMaterial({
   matcap: eggTexture,
 })
 
-const screenMaterial = new THREE.MeshMatcapMaterial({
-  matcap: screenTexture,
+const insetMaterial = new THREE.MeshMatcapMaterial({
+  matcap: insetTexture,
 })
 
 const params = {
   helpers: true,
   eggGirth: 0.8,
   eggApex: 0.15,
-  screenRadiusTop: 1,
-  screenRadiusBottom: 0.5,
-  screenHeight: 0.5,
-  screenPositionX: 0,
-  screenPositionY: 0,
-  screenPositionZ: -0.5,
+  insetRadiusTop: 1,
+  insetRadiusBottom: 0.5,
+  insetHeight: 0.5,
+  insetPositionX: 0,
+  insetPositionY: 0,
+  insetPositionZ: -0.5,
   deviceScaleX: 1,
   deviceScaleZ: 0.5,
 }
@@ -51,9 +51,9 @@ const params = {
 function generateDevice() {
   if (device) {
     eggGeometry.dispose()
-    screenGeometry.dispose()
+    insetGeometry.dispose()
 
-    scene.remove(egg, screen, device)
+    scene.remove(egg, inset, device)
   }
 
   const points = []
@@ -71,22 +71,30 @@ function generateDevice() {
   egg.scale.set(params.deviceScaleX, 1, params.deviceScaleZ)
   egg.updateMatrixWorld()
 
-  screenGeometry = new THREE.CylinderGeometry(
-    params.screenRadiusTop,
-    params.screenRadiusBottom,
-    params.screenHeight,
+  insetGeometry = new THREE.CylinderGeometry(
+    params.insetRadiusTop,
+    params.insetRadiusBottom,
+    params.insetHeight,
     4,
   )
-  screen = new Brush(screenGeometry, screenMaterial)
-  screen.rotation.y = Math.PI * 0.25
-  screen.rotation.x = -Math.PI * 0.5
-  screen.position.set(params.screenPositionX, params.screenPositionY, params.screenPositionZ)
-  screen.updateMatrixWorld()
+  inset = new Brush(insetGeometry, insetMaterial)
+  inset.rotation.y = Math.PI * 0.25
+  inset.rotation.x = -Math.PI * 0.5
+  inset.position.set(params.insetPositionX, params.insetPositionY, params.insetPositionZ)
+  inset.updateMatrixWorld()
 
   const evaluator = new Evaluator()
-  device = evaluator.evaluate(egg, screen, SUBTRACTION)
+  device = evaluator.evaluate(egg, inset, SUBTRACTION)
 
-  scene.add(device)
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(),
+    new THREE.MeshBasicMaterial({ color: 'black' }),
+  )
+  screen.scale.setScalar(0.7)
+  screen.position.z = -0.3
+  screen.rotation.x = Math.PI
+
+  scene.add(device, screen)
 }
 
 generateDevice()
@@ -94,12 +102,12 @@ generateDevice()
 gui.add(params, 'eggGirth').min(0).max(2).step(0.001).onChange(generateDevice)
 gui.add(params, 'eggApex').min(0).max(2).step(0.001).onChange(generateDevice)
 
-gui.add(params, 'screenRadiusTop').min(0).max(10).step(0.01).onChange(generateDevice)
-gui.add(params, 'screenRadiusBottom').min(0).max(10).step(0.01).onChange(generateDevice)
-gui.add(params, 'screenHeight').min(0).max(10).step(0.01).onChange(generateDevice)
-gui.add(params, 'screenPositionX').min(-5).max(5).step(0.01).onChange(generateDevice)
-gui.add(params, 'screenPositionY').min(-5).max(5).step(0.01).onChange(generateDevice)
-gui.add(params, 'screenPositionZ').min(-5).max(5).step(0.01).onChange(generateDevice)
+gui.add(params, 'insetRadiusTop').min(0).max(10).step(0.01).onChange(generateDevice)
+gui.add(params, 'insetRadiusBottom').min(0).max(10).step(0.01).onChange(generateDevice)
+gui.add(params, 'insetHeight').min(0).max(10).step(0.01).onChange(generateDevice)
+gui.add(params, 'insetPositionX').min(-5).max(5).step(0.01).onChange(generateDevice)
+gui.add(params, 'insetPositionY').min(-5).max(5).step(0.01).onChange(generateDevice)
+gui.add(params, 'insetPositionZ').min(-5).max(5).step(0.01).onChange(generateDevice)
 
 gui.add(params, 'deviceScaleX').min(0).max(2).step(0.001).onChange(generateDevice)
 gui.add(params, 'deviceScaleZ').min(0).max(2).step(0.001).onChange(generateDevice)
