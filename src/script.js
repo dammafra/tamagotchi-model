@@ -18,11 +18,20 @@ const eggTexture = textureLoader.load('./matcaps/matcap1.png')
 const insetTexture = textureLoader.load('./matcaps/matcap2.png')
 
 // Egg
+const evaluator = new Evaluator()
+
 let device = null
 
 let egg = null
 let inset = null
 let inset2 = null
+let inset3 = null
+let buttonBInset = null
+let buttonAInset = null
+let buttonCInset = null
+let buttonA = null
+let buttonB = null
+let buttonC = null
 
 let eggGeometry = null
 let insetGeometry = null
@@ -35,6 +44,10 @@ const eggMaterial = new THREE.MeshMatcapMaterial({
 const insetMaterial = new THREE.MeshMatcapMaterial({
   matcap: insetTexture,
 })
+
+const buttonInsetMaterial = new THREE.MeshBasicMaterial({ color: 'black' })
+const buttonInsetGeometry = new THREE.SphereGeometry(0.1)
+const buttonGeometry = new THREE.SphereGeometry(0.09)
 
 const params = {
   helpers: true,
@@ -64,8 +77,21 @@ function generateDevice() {
   if (device) {
     eggGeometry.dispose()
     insetGeometry.dispose()
+    inset2Geometry.dispose()
 
-    scene.remove(egg, inset, inset2, device)
+    scene.remove(
+      egg,
+      inset,
+      inset2,
+      inset3,
+      device,
+      buttonA,
+      buttonB,
+      buttonC,
+      buttonBInset,
+      buttonAInset,
+      buttonCInset,
+    )
   }
 
   const points = []
@@ -78,7 +104,7 @@ function generateDevice() {
     points.push(v)
   }
 
-  eggGeometry = new THREE.LatheGeometry(points, 32)
+  eggGeometry = new THREE.LatheGeometry(points, 100)
   egg = new Brush(eggGeometry, eggMaterial)
   egg.scale.set(params.deviceScaleX, 1, params.deviceScaleZ)
   egg.updateMatrixWorld()
@@ -108,56 +134,73 @@ function generateDevice() {
   inset2.position.set(params.inset2PositionX, params.inset2PositionY, params.inset2PositionZ)
   inset2.updateMatrixWorld()
 
-  const buttonInsetMaterial = new THREE.MeshBasicMaterial({ color: 'black' })
+  inset3 = generateTorusInset()
 
   //   Button A
-  const buttonAInset = new Brush(new THREE.SphereGeometry(0.1), buttonInsetMaterial)
-  buttonAInset.position.set(0, -0.7, -0.3)
+  buttonAInset = new Brush(buttonInsetGeometry, buttonInsetMaterial)
+  buttonAInset.position.set(-0.3, -0.6, -0.3)
   buttonAInset.updateMatrixWorld()
 
-  const buttonA = new Brush(new THREE.SphereGeometry(0.09), insetMaterial)
+  buttonA = new Brush(buttonGeometry, insetMaterial)
   buttonA.scale.z = 0.5
-  buttonA.rotation.x = -Math.PI * 0.15
-  buttonA.position.set(0, -0.71, -0.31)
+  buttonA.rotation.y = Math.PI * 0.1
+  buttonA.rotation.x = -Math.PI * 0.1
+  buttonA.position.set(-0.3, -0.61, -0.31)
   buttonA.updateMatrixWorld()
 
   //   Button B
-  const buttonBInset = new Brush(new THREE.SphereGeometry(0.1), buttonInsetMaterial)
-  buttonBInset.position.set(-0.3, -0.6, -0.3)
+  buttonBInset = new Brush(buttonInsetGeometry, buttonInsetMaterial)
+  buttonBInset.position.set(0, -0.7, -0.3)
   buttonBInset.updateMatrixWorld()
 
-  const buttonB = new Brush(new THREE.SphereGeometry(0.09), insetMaterial)
+  buttonB = new Brush(buttonGeometry, insetMaterial)
   buttonB.scale.z = 0.5
-  buttonB.rotation.y = Math.PI * 0.1
-  buttonB.rotation.x = -Math.PI * 0.1
-  buttonB.position.set(-0.3, -0.61, -0.31)
+  buttonB.rotation.x = -Math.PI * 0.15
+  buttonB.position.set(0, -0.71, -0.31)
   buttonB.updateMatrixWorld()
 
   //   Button C
-  const buttonCInset = new Brush(new THREE.SphereGeometry(0.1), buttonInsetMaterial)
+  buttonCInset = new Brush(buttonInsetGeometry, buttonInsetMaterial)
   buttonCInset.position.set(0.3, -0.6, -0.3)
   buttonCInset.updateMatrixWorld()
 
-  const buttonC = new Brush(new THREE.SphereGeometry(0.09), insetMaterial)
+  buttonC = new Brush(buttonGeometry, insetMaterial)
   buttonC.scale.z = 0.5
   buttonC.rotation.y = -Math.PI * 0.1
   buttonC.rotation.x = -Math.PI * 0.1
   buttonC.position.set(0.3, -0.61, -0.31)
   buttonC.updateMatrixWorld()
 
-  const evaluator = new Evaluator()
   device = evaluator.evaluate(egg, inset, SUBTRACTION)
   device = evaluator.evaluate(device, inset2, SUBTRACTION)
+  device = evaluator.evaluate(device, inset3, SUBTRACTION)
 
-  device = evaluator.evaluate(device, buttonAInset, SUBTRACTION)
   device = evaluator.evaluate(device, buttonBInset, SUBTRACTION)
+  device = evaluator.evaluate(device, buttonAInset, SUBTRACTION)
   device = evaluator.evaluate(device, buttonCInset, SUBTRACTION)
 
-  device = evaluator.evaluate(device, buttonA, ADDITION)
   device = evaluator.evaluate(device, buttonB, ADDITION)
+  device = evaluator.evaluate(device, buttonA, ADDITION)
   device = evaluator.evaluate(device, buttonC, ADDITION)
 
   scene.add(device)
+}
+
+function generateTorusInset() {
+  const torusInsetGeometry = new THREE.TorusGeometry(0.8, 0.02)
+  const torusInset = new Brush(torusInsetGeometry, eggMaterial)
+  torusInset.scale.y = 0.5
+  torusInset.position.y = -0.02
+  torusInset.rotation.x = Math.PI * 0.5
+  torusInset.updateMatrixWorld()
+
+  const boxGeometry = new THREE.BoxGeometry(1.2, 1.2, 1.2)
+  const box = new Brush(boxGeometry, eggMaterial)
+  box.position.z = -0.5
+  box.updateMatrixWorld()
+
+  const evaluator = new Evaluator()
+  return evaluator.evaluate(torusInset, box, SUBTRACTION)
 }
 
 generateDevice()
