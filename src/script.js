@@ -50,7 +50,7 @@ const insetMaterial = new THREE.MeshMatcapMaterial({
   matcap: insetTexture,
 })
 
-const buttonInsetMaterial = new THREE.MeshBasicMaterial({ color: 'black' })
+const buttonInsetMaterial = new THREE.MeshMatcapMaterial({ color: 'black' })
 const buttonInsetGeometry = new THREE.SphereGeometry(0.1)
 
 const params = {
@@ -217,6 +217,16 @@ resetButton.rotation.x = Math.PI * 0.1
 resetButton.position.set(-0.3, -0.61, 0.31)
 
 scene.add(buttonA, buttonB, buttonC, resetButton)
+
+const tab = new THREE.Mesh(
+  new THREE.PlaneGeometry(1, 0.3),
+  new THREE.MeshMatcapMaterial({ color: 'red', transparent: true, side: THREE.DoubleSide }),
+)
+tab.position.x = -0.5
+tab.position.y = -0.4
+tab.rotation.x = Math.PI
+tab.rotation.z = Math.PI * 0.9
+scene.add(tab)
 
 gui.add(params, 'eggGirth').min(0).max(2).step(0.001).onChange(generateDevice)
 gui.add(params, 'eggApex').min(0).max(2).step(0.001).onChange(generateDevice)
