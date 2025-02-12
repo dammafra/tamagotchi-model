@@ -1,4 +1,4 @@
-# Three.js Journey
+# Tamagotchi Model
 
 ## Setup
 
