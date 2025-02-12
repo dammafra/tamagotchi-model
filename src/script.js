@@ -224,6 +224,7 @@ const tab = new THREE.Mesh(
   new THREE.PlaneGeometry(1, 0.3),
   new THREE.MeshMatcapMaterial({ color: 'red', transparent: true, side: THREE.DoubleSide }),
 )
+tab.visible = false
 tab.position.x = -0.5
 tab.position.y = -0.4
 tab.rotation.x = Math.PI
