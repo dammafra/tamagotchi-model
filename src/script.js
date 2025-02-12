@@ -36,6 +36,7 @@ let inset3 = null
 let buttonBInset = null
 let buttonAInset = null
 let buttonCInset = null
+let reetButtonInset = null
 
 let eggGeometry = null
 let insetGeometry = null
@@ -82,7 +83,17 @@ function generateDevice() {
     insetGeometry.dispose()
     inset2Geometry.dispose()
 
-    scene.remove(egg, inset, inset2, inset3, device, buttonAInset, buttonBInset, buttonCInset)
+    scene.remove(
+      egg,
+      inset,
+      inset2,
+      inset3,
+      device,
+      buttonAInset,
+      buttonBInset,
+      buttonCInset,
+      reetButtonInset,
+    )
   }
 
   const points = []
@@ -142,6 +153,12 @@ function generateDevice() {
   buttonCInset.position.set(0.3, -0.6, -0.3)
   buttonCInset.updateMatrixWorld()
 
+  // Reset button
+  reetButtonInset = new Brush(buttonInsetGeometry, buttonInsetMaterial)
+  reetButtonInset.scale.setScalar(0.5)
+  reetButtonInset.position.set(-0.3, -0.6, 0.3)
+  reetButtonInset.updateMatrixWorld()
+
   device = evaluator.evaluate(egg, inset, SUBTRACTION)
   device = evaluator.evaluate(device, inset2, SUBTRACTION)
   device = evaluator.evaluate(device, inset3, SUBTRACTION)
@@ -149,6 +166,7 @@ function generateDevice() {
   device = evaluator.evaluate(device, buttonBInset, SUBTRACTION)
   device = evaluator.evaluate(device, buttonAInset, SUBTRACTION)
   device = evaluator.evaluate(device, buttonCInset, SUBTRACTION)
+  device = evaluator.evaluate(device, reetButtonInset, SUBTRACTION)
 
   scene.add(device)
 }
@@ -192,7 +210,13 @@ buttonC.rotation.y = -Math.PI * 0.1
 buttonC.rotation.x = -Math.PI * 0.1
 buttonC.position.set(0.3, -0.61, -0.31)
 
-scene.add(buttonA, buttonB, buttonC)
+const resetButton = new Brush(buttonGeometry, new THREE.MeshMatcapMaterial({ color: 'gray' }))
+resetButton.scale.set(0.45, 0.45, 0.15)
+resetButton.rotation.y = -Math.PI * 0.1
+resetButton.rotation.x = Math.PI * 0.1
+resetButton.position.set(-0.3, -0.61, 0.31)
+
+scene.add(buttonA, buttonB, buttonC, resetButton)
 
 gui.add(params, 'eggGirth').min(0).max(2).step(0.001).onChange(generateDevice)
 gui.add(params, 'eggApex').min(0).max(2).step(0.001).onChange(generateDevice)
