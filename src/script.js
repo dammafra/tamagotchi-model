@@ -21,8 +21,10 @@ const scene = new THREE.Scene()
 
 // Textures
 const textureLoader = new THREE.TextureLoader()
-const eggTexture = textureLoader.load('./matcaps/matcap1.png')
-const insetTexture = textureLoader.load('./matcaps/matcap2.png')
+const total = 641
+const random = () => Math.floor(Math.random() * (total + 1))
+const eggTexture = textureLoader.load(`./matcaps/${random()}.png`)
+const insetTexture = textureLoader.load(`./matcaps/${random()}.png`)
 
 // Egg
 const evaluator = new Evaluator()
