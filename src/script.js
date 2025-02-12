@@ -1,7 +1,7 @@
 import GUI from 'lil-gui'
 import Stats from 'stats.js'
 import * as THREE from 'three'
-import { ADDITION, Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg'
+import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 // Stats
@@ -11,6 +11,7 @@ document.body.appendChild(stats.dom)
 
 // Debug
 const gui = new GUI()
+gui.show(window.location.hash === '#debug')
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
@@ -35,9 +36,6 @@ let inset3 = null
 let buttonBInset = null
 let buttonAInset = null
 let buttonCInset = null
-let buttonA = null
-let buttonB = null
-let buttonC = null
 
 let eggGeometry = null
 let insetGeometry = null
@@ -53,7 +51,6 @@ const insetMaterial = new THREE.MeshMatcapMaterial({
 
 const buttonInsetMaterial = new THREE.MeshBasicMaterial({ color: 'black' })
 const buttonInsetGeometry = new THREE.SphereGeometry(0.1)
-const buttonGeometry = new THREE.SphereGeometry(0.09)
 
 const params = {
   helpers: true,
@@ -85,19 +82,7 @@ function generateDevice() {
     insetGeometry.dispose()
     inset2Geometry.dispose()
 
-    scene.remove(
-      egg,
-      inset,
-      inset2,
-      inset3,
-      device,
-      buttonA,
-      buttonB,
-      buttonC,
-      buttonBInset,
-      buttonAInset,
-      buttonCInset,
-    )
+    scene.remove(egg, inset, inset2, inset3, device, buttonAInset, buttonBInset, buttonCInset)
   }
 
   const points = []
@@ -147,35 +132,15 @@ function generateDevice() {
   buttonAInset.position.set(-0.3, -0.6, -0.3)
   buttonAInset.updateMatrixWorld()
 
-  buttonA = new Brush(buttonGeometry, insetMaterial)
-  buttonA.scale.z = 0.5
-  buttonA.rotation.y = Math.PI * 0.1
-  buttonA.rotation.x = -Math.PI * 0.1
-  buttonA.position.set(-0.3, -0.61, -0.31)
-  buttonA.updateMatrixWorld()
-
   //   Button B
   buttonBInset = new Brush(buttonInsetGeometry, buttonInsetMaterial)
   buttonBInset.position.set(0, -0.7, -0.3)
   buttonBInset.updateMatrixWorld()
 
-  buttonB = new Brush(buttonGeometry, insetMaterial)
-  buttonB.scale.z = 0.5
-  buttonB.rotation.x = -Math.PI * 0.15
-  buttonB.position.set(0, -0.71, -0.31)
-  buttonB.updateMatrixWorld()
-
   //   Button C
   buttonCInset = new Brush(buttonInsetGeometry, buttonInsetMaterial)
   buttonCInset.position.set(0.3, -0.6, -0.3)
   buttonCInset.updateMatrixWorld()
-
-  buttonC = new Brush(buttonGeometry, insetMaterial)
-  buttonC.scale.z = 0.5
-  buttonC.rotation.y = -Math.PI * 0.1
-  buttonC.rotation.x = -Math.PI * 0.1
-  buttonC.position.set(0.3, -0.61, -0.31)
-  buttonC.updateMatrixWorld()
 
   device = evaluator.evaluate(egg, inset, SUBTRACTION)
   device = evaluator.evaluate(device, inset2, SUBTRACTION)
@@ -184,10 +149,6 @@ function generateDevice() {
   device = evaluator.evaluate(device, buttonBInset, SUBTRACTION)
   device = evaluator.evaluate(device, buttonAInset, SUBTRACTION)
   device = evaluator.evaluate(device, buttonCInset, SUBTRACTION)
-
-  device = evaluator.evaluate(device, buttonB, ADDITION)
-  device = evaluator.evaluate(device, buttonA, ADDITION)
-  device = evaluator.evaluate(device, buttonC, ADDITION)
 
   scene.add(device)
 }
@@ -200,7 +161,7 @@ function generateTorusInset() {
   torusInset.rotation.x = Math.PI * 0.5
   torusInset.updateMatrixWorld()
 
-  const boxGeometry = new THREE.BoxGeometry(1.2, 1.2, 1.2)
+  const boxGeometry = new THREE.BoxGeometry(1.1, 1.1, 1.1)
   const box = new Brush(boxGeometry, eggMaterial)
   box.position.z = -0.5
   box.updateMatrixWorld()
@@ -210,6 +171,28 @@ function generateTorusInset() {
 }
 
 generateDevice()
+
+// Buttons
+const buttonGeometry = new THREE.SphereGeometry(0.09)
+
+const buttonA = new THREE.Mesh(buttonGeometry, insetMaterial)
+buttonA.scale.z = 0.5
+buttonA.rotation.y = Math.PI * 0.1
+buttonA.rotation.x = -Math.PI * 0.1
+buttonA.position.set(-0.3, -0.61, -0.31)
+
+const buttonB = new Brush(buttonGeometry, insetMaterial)
+buttonB.scale.z = 0.5
+buttonB.rotation.x = -Math.PI * 0.15
+buttonB.position.set(0, -0.71, -0.31)
+
+const buttonC = new Brush(buttonGeometry, insetMaterial)
+buttonC.scale.z = 0.5
+buttonC.rotation.y = -Math.PI * 0.1
+buttonC.rotation.x = -Math.PI * 0.1
+buttonC.position.set(0.3, -0.61, -0.31)
+
+scene.add(buttonA, buttonB, buttonC)
 
 gui.add(params, 'eggGirth').min(0).max(2).step(0.001).onChange(generateDevice)
 gui.add(params, 'eggApex').min(0).max(2).step(0.001).onChange(generateDevice)
@@ -257,17 +240,17 @@ gui.add(screen.position, 'z').min(-1).max(1).step(0.001).name('screenPositionZ')
 
 // Helpers
 const axesHelper = new THREE.AxesHelper(10)
-axesHelper.visible = params.helpers
+axesHelper.visible = !gui._hidden
 axesHelper.position.y = -0.999
 
 const gridHelper = new THREE.GridHelper(10, 10, 'white', 'white')
 gridHelper.position.y = -1
-gridHelper.visible = params.helpers
+gridHelper.visible = !gui._hidden
 
 scene.add(axesHelper, gridHelper)
 
 // const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight)
-// directionalLightHelper.visible = params.helpers
+// directionalLightHelper.visible = !gui._hidden
 
 scene.add(axesHelper, gridHelper)
 gui.add(params, 'helpers').onChange(value => {
