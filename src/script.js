@@ -216,7 +216,7 @@ const resetButton = new Brush(buttonGeometry, new THREE.MeshMatcapMaterial({ col
 resetButton.scale.set(0.45, 0.45, 0.15)
 resetButton.rotation.y = -Math.PI * 0.1
 resetButton.rotation.x = Math.PI * 0.1
-resetButton.position.set(-0.3, -0.61, 0.31)
+resetButton.position.set(-0.3, -0.61, 0.3)
 
 scene.add(buttonA, buttonB, buttonC, resetButton)
 
