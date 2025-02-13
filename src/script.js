@@ -132,8 +132,8 @@ function generateDevice() {
     4,
   )
   inset2 = new Brush(inset2Geometry, insetMaterial)
+  inset2.scale.setScalar(0.8)
   inset2.rotation.y = Math.PI * 0.05
-  inset2.scale.setScalar(0.8, 2, 0.5)
   inset2.rotation.x = -Math.PI * 0.5
   inset2.position.set(params.inset2PositionX, params.inset2PositionY, params.inset2PositionZ)
   inset2.updateMatrixWorld()
@@ -186,7 +186,6 @@ function generateTorusInset() {
   box.position.z = -0.5
   box.updateMatrixWorld()
 
-  const evaluator = new Evaluator()
   return evaluator.evaluate(torusInset, box, SUBTRACTION)
 }
 
